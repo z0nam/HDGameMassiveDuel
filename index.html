@@ -8,7 +8,7 @@
   <body>
   <script type="text/javascript">
   // 테스트용 데이터
-  var student1 = {studentId: "1234-56789", name: "이정후", maxMemory: 2,
+  var student1 = {studentId: "1234-56789", name: "이정후", maxMemory: 4,
     memories: {
       init: ['d', 1],
       dd: ['d', 1],
@@ -27,16 +27,18 @@
       hddh: ['h', 1],
       hdhd: ['d', 1],
       hdhh: ['h', 1],
-      hhdd: ['d', 1],
+      hhdd: ['d', 0.2],
       hhdh: ['h', 1],
       hhhd: ['d', 1],
-      hhhh: ['h', 1]
+      hhhh: ['h', 1],
+      hhddhd: ['h', 0.3],
+      hhddhddh: ['d', 0.4]
     },
     scores: Array(Array()),
-    history: ["hh", "dd", "hd"],
+    history: ["hh", "dd", "hd", 'dh'],
     games: 0,
     getStrategy: getStrategy,
-    makeDecision: makeDecision
+    makeDecision: makeDecision,
   };
 
   var student2 = {studentId: '12345-678', name: '김지경', maxMemory: 1,
@@ -51,7 +53,7 @@
     scores: [[0, 0, 130, 105, 0, 130, 105, 0, 130, 0], [105, 0, 130]],
     games: 57,
     getStrategy: getStrategy,
-    makeDecision: makeDecision
+    makeDecision: makeDecision,
   };
 
   // 전략을 가지고 d, h 중 무엇을 낼지 결정
@@ -76,31 +78,35 @@
   }
 
 // history와 비교하여 전략을 짬
-function getStrategy (round) { // 로직을 더 다듬어야 함. 예외 처리 필요: dh문자가 없는 경우
-  var memory = [];
-  var history = "";
-  var memoryNumber = Math.min(round - 1, this.maxMemory);
+function getStrategy (round) { 
+  var memoryNumber = Math.min(round - 1, this.maxMemory, this.history.length); // round마다 사용해야할 memory 숫자를 판단
+  return getMemory(memoryNumber, this.memories, this.history);
 
-  if (round === 1) {
-    memory = this.memories["init"];
-  } else if (round <= 10) {
-    for (var i = 0; i < memoryNumber; i++) {
-      history += this.history[i]; // 최근 히스토리 생성
+  function getMemory(num, memories, history) {
+    var memory = [];
+    var recentHistory = "";
+
+    if (num === 0) {
+      memory = memories["init"];
+    } else if (num <= 10) {
+      for (var i = 0; i < num; i++) {
+        recentHistory += history[i]; // 최근 히스토리 생성
+      }
+      memory = memories[recentHistory]; // recentHistory에 해당하는 메모리 가져옴.
+      if (!memory) {
+        arguments.callee(num - 1);
+      }
+    } else {
+      console.log("error: round value");
     }
-    memory = this.memories[history]; // history에 해당하는 메모리 가져옴. 이 근처에서 예외처리하자. 재귀함수 이용해서.
-  } else {
-    console.log("error: round value");
+    return memory;
   }
-  console.log(history);
-  return memory;
 }
-
-console.log(student1.getStrategy(4));
 
 // 두 명이 한 라운드 대결을 함. 결과를 history에 저장하고, 점수를 계산하여 저장. 10라운드인지 판단
 function duel(user1, user2, round) {
   var result = user1.makeDecision(round) + user2.makeDecision(round);
-  user1.history.unshift(result);
+  user1.history.unshift(result); // 최근 결과가 앞에 옴.
   user2.history.unshift(result);
 
   switch (result) {
@@ -129,25 +135,6 @@ function duel(user1, user2, round) {
   }
 }
 
-// duel(student1, student2, 1);
-// console.log(student1, student2);
-
-// round마다 사용해야할 memory 숫자를 판단
-function getMemoryNumber(round, maxMemory) {
-  var result = Math.min(round - 1, maxMemory);
-  return result;
-}
-
-// getMemoryNumber 테스트용
-(function () {
-  var matrix = Array();
-  for (var i = 1; i <= 4; i++) {
-    for (var j = 1; j <= 10; j++) {
-      matrix.push(getMemoryNumber(j, i));
-    }
-  }
-  console.log(matrix);
-})();
   </script>
   </body>
 </html>
