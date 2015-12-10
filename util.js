@@ -23,6 +23,7 @@ var student1 = {studentId: "1234-56789", name: "user1", maxMemory: 4,
     hhdh: ['h', 1],
     hhhd: ['d', 1],
     hhhh: ['h', 1],
+    hhhddh: ['d', 1],
     hhddhd: ['h', 1],
     hhddhddh: ['h', 1]
   },
@@ -56,8 +57,9 @@ var student2 = {studentId: '12345-678', name: 'user2', maxMemory: 1,
 function makeDecision(round) {
   var randonNumber = Math.random();
   var memoryNumber = Math.min(round - 1, this.maxMemory, this.history.length); // round마다 사용해야할 memory 숫자를 판단
-  var strategy = this.getMemory(memoryNumber, this.memories, this.history); // 실제 참고한 전략
-  lastStrategy = strategy;
+  var memory = this.getMemory(memoryNumber, this.memories, this.history); // 실제 참고한 전략의 키와 값
+  this.lastStrategy = memory[0];
+  var strategy = memory[1];
   var char = strategy[0];
   var probability = strategy[1] || 1;
 
@@ -78,24 +80,25 @@ function makeDecision(round) {
 
   // history와 비교하여 전략을 짬
   function getMemory(num, memories, history) {
-    var memory = [];
+    var strategy = [];
     var recentHistory = "";
 
     if (num === 0) {
-      memory = memories["init"];
+      strategy = memories["init"];
     } else if (num <= 10) {
       for (var i = 0; i < num; i++) {
         recentHistory += history[i]; // 최근 히스토리 생성
       }
-      memory = memories[recentHistory]; // recentHistory에 해당하는 메모리 가져옴.
-      if (unusableMemory(memory)) {  //
-        memory = arguments.callee(num - 1, memories, history);
+      strategy = memories[recentHistory]; // recentHistory에 해당하는 메모리 가져옴.
+      if (unusableMemory(strategy)) {  //
+        recentHistory = arguments.callee(num - 1, memories, history)[0];
+        strategy = arguments.callee(num - 1, memories, history)[1];
       }
     } else {
       console.log("error: round value");
     }
-    console.log(num, recentHistory, memory);
-    return memory;
+    console.log(num, recentHistory, strategy);
+    return [recentHistory, strategy];
   }
 
 function unusableMemory(memory) {
