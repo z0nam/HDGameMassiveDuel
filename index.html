@@ -31,8 +31,8 @@
       hhdh: ['h', 1],
       hhhd: ['d', 1],
       hhhh: ['h', 1],
-      hhddhd: ['h', 0.3],
-      hhddhddh: ['d', 0.4]
+      hhddhd: ['g', 0.3],
+      // hhddhddh: ['h', 0.4]
     },
     scores: Array(Array()),
     history: ["hh", "dd", "hd", 'dh'],
@@ -78,7 +78,7 @@
   }
 
 // history와 비교하여 전략을 짬
-function getStrategy (round) { 
+function getStrategy (round) {
   var memoryNumber = Math.min(round - 1, this.maxMemory, this.history.length); // round마다 사용해야할 memory 숫자를 판단
   return getMemory(memoryNumber, this.memories, this.history);
 
@@ -93,8 +93,8 @@ function getStrategy (round) {
         recentHistory += history[i]; // 최근 히스토리 생성
       }
       memory = memories[recentHistory]; // recentHistory에 해당하는 메모리 가져옴.
-      if (!memory) {
-        arguments.callee(num - 1);
+      if (!memory || ( memory[0] !== 'h' && memory[0] !== 'd')) {  //
+        memory = arguments.callee(num - 1, memories, history);
       }
     } else {
       console.log("error: round value");
@@ -102,6 +102,8 @@ function getStrategy (round) {
     return memory;
   }
 }
+console.log(student1.getStrategy(2));
+
 
 // 두 명이 한 라운드 대결을 함. 결과를 history에 저장하고, 점수를 계산하여 저장. 10라운드인지 판단
 function duel(user1, user2, round) {
@@ -128,7 +130,7 @@ function duel(user1, user2, round) {
       break;
     default:
   }
-
+  
   if (round === 10) {
     user1.games ++;
     user2.games ++;
