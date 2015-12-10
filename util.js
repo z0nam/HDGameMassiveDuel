@@ -1,8 +1,172 @@
-// 재귀함수
-function factorial(num) {
-  if (num <= 1) {
-    return 1;
+// 테스트용 데이터
+var student1 = {studentId: "1234-56789", name: "user1", maxMemory: 4,
+  memories: {
+    init: ['d', 1],
+    dd: ['d', 1],
+    dh: ['h', 1],
+    hd: ['d', 1],
+    hh: ['h', 1],
+    dddd:	['d', ],
+    dddh: ['h', 1],
+    ddhd: ['d', 1],
+    ddhh: ['h', 1],
+    dhdd: ['d', 1],
+    dhdh: ['h', 1],
+    dhhd: ['d', 1],
+    dhhh: ['h', 1],
+    hddd: ['d', 1],
+    hddh: ['h', 1],
+    hdhd: ['d', 1],
+    hdhh: ['h', 1],
+    hhdd: ['d', 0.2],
+    hhdh: ['h', 1],
+    hhhd: ['d', 1],
+    hhhh: ['h', 1],
+    hhddhd: ['h', 0.3],
+    hhddhddh: ['h', 0.4]
+  },
+  scores: Array(Array()),
+  // history: ["hh", "dd", "hd", 'dh'],
+  history: [],
+  games: 0,
+  getStrategy: getStrategy,
+  makeDecision: makeDecision,
+};
+
+var student2 = {studentId: '12345-678', name: 'user2', maxMemory: 1,
+  memories: {
+    init: ['h', 0.7],
+    dd: ['h', 0.3],
+    dh: ['d', 0.5],
+    hd: ['h', 0.7],
+    hh: ['d', 0.6]
+  },
+  // history: ["dh", "dd"],
+  // scores: [[0, 0, 130, 105, 0, 130, 105, 0, 130, 0], [105, 0, 130]],
+  history: [],
+  scores: Array(Array()),
+  games: 57,
+  getStrategy: getStrategy,
+  makeDecision: makeDecision,
+};
+
+// 전략을 가지고 d, h 중 무엇을 낼지 결정
+function makeDecision(round) {
+  var number = Math.random();
+  var strategy = this.getStrategy(round);
+  var char = strategy[0];
+  var probability = strategy[1] || 1;
+
+  if (number <= probability && (char === 'd' || char === 'h')) {
+    return char;
   } else {
-    return num * arguments.callee(num - 1);
+    switch (char) {
+      case 'd':
+        return 'h';
+      case 'h':
+        return 'd';
+      default:
+        console.log("error: strategy character");
+    }
   }
+}
+
+// history와 비교하여 전략을 짬
+function getStrategy (round) {
+  var memoryNumber = Math.min(round - 1, this.maxMemory, this.history.length); // round마다 사용해야할 memory 숫자를 판단
+  return getMemory(memoryNumber, this.memories, this.history);
+
+  function getMemory(num, memories, history) {
+    var memory = [];
+    var recentHistory = "";
+
+    if (num === 0) {
+      memory = memories["init"];
+    } else if (num <= 10) {
+      for (var i = 0; i < num; i++) {
+        recentHistory += history[i]; // 최근 히스토리 생성
+      }
+      memory = memories[recentHistory]; // recentHistory에 해당하는 메모리 가져옴.
+      if (unusableMemory(memory)) {  //
+        memory = arguments.callee(num - 1, memories, history);
+      }
+    } else {
+      console.log("error: round value");
+    }
+    return memory;
+  }
+}
+
+function unusableMemory(memory) {
+  return !memory || ( memory[0] !== 'h' && memory[0] !== 'd'); // 못쓰는 값이면 true 반환
+}
+
+// 두 명이 한 라운드 대결을 함. 결과를 history에 저장하고, 점수를 계산하여 저장. 10라운드인지 판단
+function duel(user1, user2, round) {
+  var result = user1.makeDecision(round) + user2.makeDecision(round);
+  user1.history.unshift(result); // 최근 결과가 앞에 옴.
+  user2.history.unshift(result);
+
+  var score = [];
+  switch (result) {
+    case "dd":
+      score = [105, 105];
+      break;
+    case "dh":
+      score = [105, 130];
+      break;
+    case "hd":
+      score = [130, 105];
+      break;
+    case "hh":
+      score = [0, 0];
+      break;
+    default:
+      console.log("error: invalid result");
+  }
+
+  user1.scores[0][round - 1] = score[0]; // 몇번째 게임인지 알아내서 [0] 부분을 교체해야 함
+  user2.scores[0][round - 1] = score[1];
+
+  putDuelLogs(user1, round);
+  putDuelLogs(user2, round);
+
+  if (round === 10) {
+    user1.games ++;
+    user2.games ++;
+  }
+
+}
+
+function calScore(result) {
+  switch (result) {
+    case "dd":
+      score = [105, 105];
+      break;
+    case "dh":
+      score = [105, 130];
+      break;
+    case "hd":
+      score = [130, 105];
+      break;
+    case "hh":
+      score = [0, 0];
+      break;
+    default:
+      console.log("error: invalid result");
+  }
+}
+
+function putDuelLogs(user, round) {
+  document.write("Round " + round + " " + user.name + ": ");
+  document.write(user.history[round-1] + " ");
+  document.write(user.scores[0][round-1] + "<br/>");
+}
+
+function playGame(user1, user2) {
+  for (var i = 1; i <= 10; i++) {
+    duel(user1, user2, i);
+  }
+    document.write("user1: " + user1.scores + " " + user1.history + "<br/>");
+    document.write("user2: " + user2.scores + " " + user2.history + "<br/>");
 }
