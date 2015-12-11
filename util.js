@@ -29,7 +29,7 @@ var student1 = {studentId: "1234-56789", name: "user1", maxMemory: 4,
   },
   scores: Array(Array()),
   // history: ["hh", "dd", "hd", 'dh'],
-  history: [],
+  history: [], // [주의] 최근 것이 앞에 옴. 말하자면 내림차순.
   games: 0,
   getMemory: getMemory,
   makeDecision: makeDecision,
@@ -58,8 +58,8 @@ function makeDecision(round) {
   var randonNumber = Math.random();
   var memoryNumber = Math.min(round - 1, this.maxMemory, this.history.length); // round마다 사용해야할 memory 숫자를 판단
   var memory = this.getMemory(memoryNumber, this.memories, this.history); // 실제 참고한 전략의 키와 값
-  this.lastStrategy = memory[0];
-  var strategy = memory[1];
+  this.lastStrategy = memory.recentHistory;
+  var strategy = memory.strategy;
   var char = strategy[0];
   var probability = strategy[1] || 1;
 
@@ -91,14 +91,14 @@ function makeDecision(round) {
       }
       strategy = memories[recentHistory]; // recentHistory에 해당하는 메모리 가져옴.
       if (unusableMemory(strategy)) {  //
-        recentHistory = arguments.callee(num - 1, memories, history)[0];
-        strategy = arguments.callee(num - 1, memories, history)[1];
+        recentHistory = arguments.callee(num - 1, memories, history).recentHistory;
+        strategy = arguments.callee(num - 1, memories, history).strategy;
       }
     } else {
       console.log("error: round value");
     }
     console.log(num, recentHistory, strategy);
-    return [recentHistory, strategy];
+    return {recentHistory: recentHistory, strategy: strategy};
   }
 
 function unusableMemory(memory) {
