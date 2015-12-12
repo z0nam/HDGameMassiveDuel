@@ -1,6 +1,16 @@
+var totalGames = 0;
+
 // 테스트용 데이터
 var student1 = {studentId: "1234-56789", name: "user1", maxMemory: 4,
   lastStrategy: "",
+  scores: [],
+  history: [], // [주의] 최근 것이 앞에 옴. 말하자면 내림차순.
+  gameNumbers: [],
+  gameScore: [],
+  gameHistory: [],
+  games: 0,
+  getMemory: getMemory,
+  makeDecision: makeDecision,
   memories: {
     init: ['d', 1],
     dd: ['d', 1],
@@ -27,16 +37,18 @@ var student1 = {studentId: "1234-56789", name: "user1", maxMemory: 4,
     hhddhd: ['h', 1],
     hhddhddh: ['h', 1]
   },
-  scores: Array(Array()),
-  // history: ["hh", "dd", "hd", 'dh'],
-  history: [], // [주의] 최근 것이 앞에 옴. 말하자면 내림차순.
-  games: 0,
-  getMemory: getMemory,
-  makeDecision: makeDecision,
 };
 
 var student2 = {studentId: '12345-678', name: 'user2', maxMemory: 1,
   lastStrategy: "",
+  history: [],
+  scores: [],
+  gameNumbers: [],
+  gameScore: [],
+  gameHistory: [],
+  games: 0,
+  getMemory: getMemory,
+  makeDecision: makeDecision,
   memories: {
     init: ['h', 1],
     dd: ['h', 1],
@@ -44,13 +56,6 @@ var student2 = {studentId: '12345-678', name: 'user2', maxMemory: 1,
     hd: ['h', 1],
     hh: ['d', 1]
   },
-  // history: ["dh", "dd"],
-  // scores: [[0, 0, 130, 105, 0, 130, 105, 0, 130, 0], [105, 0, 130]],
-  history: [],
-  scores: Array(Array()),
-  games: 57,
-  getMemory: getMemory,
-  makeDecision: makeDecision,
 };
 
 // 전략을 가지고 d, h 중 무엇을 낼지 결정
@@ -97,7 +102,7 @@ function makeDecision(round) {
     } else {
       console.log("error: round value");
     }
-    console.log(num, recentHistory, strategy);
+    // console.log(num, recentHistory, strategy);
     return {recentHistory: recentHistory, strategy: strategy};
   }
 
@@ -111,16 +116,11 @@ function duel(user1, user2, round) {
   user1.history.unshift(result); // 최근 결과가 앞에 옴.
   user2.history.unshift(result);
 
-  user1.scores[0][round - 1] = calScore(result)[0]; // 몇번째 게임인지 알아내서 [0] 부분을 교체해야 함
-  user2.scores[0][round - 1] = calScore(result)[1];
+  user1.scores[round - 1] = calScore(result)[0]; // 몇번째 게임인지 알아내서 [0] 부분을 교체해야 함
+  user2.scores[round - 1] = calScore(result)[1];
 
   putDuelLogs(user1, round);
   putDuelLogs(user2, round);
-
-  if (round === 10) {
-    user1.games ++;
-    user2.games ++;
-  }
 
 }
 
@@ -142,16 +142,51 @@ function calScore(result) {
 function putDuelLogs(user, round) {
   document.write("Round " + round + " " + user.name + ": ");
   document.write(user.history[0] + " ");
-  document.write(user.scores[0][round-1] + " ");
-  document.write(user.lastStrategy + "<br/>");
+  document.write(user.scores[round-1] + " ");
+  document.write(user.lastStrategy + "<br />");
 }
 
 function playGame(user1, user2) {
+  user1.lastStrategy = "";
+  user1.scores = [];
+  user1.history = [];
+  user2.lastStrategy = "";
+  user2.scores = [];
+  user2.history = [];
+
   for (var i = 1; i <= 10; i++) {
     duel(user1, user2, i);
   }
-    document.write("user1: " + user1.scores + " " + tempReverse(user1.history) + "<br/>");
-    document.write("user2: " + user2.scores + " " + tempReverse(user2.history) + "<br/>");
+
+  var gameResults = {
+    gameNumber: totalGames,
+    players: [user1.studentId, user2.studentId],
+    gameHistory: user1.history,
+    scores: (function () {
+      var sumScores = [0,0];
+      for (var i = 0; i < 10; i++) {
+        sumScores[0] += user1.scores[i];
+        sumScores[1] += user2.scores[i];
+      }
+      return sumScores;
+    })()
+  };
+
+  totalGames ++;
+  // 게임 결과를 각 user에 저장
+  user1.games ++;
+  user1.gameScore.push(gameResults.scores[0]);
+  user1.gameHistory.push(tempReverse(user1.history).join(""));
+  user1.gameNumbers.push(totalGames);
+  user2.games ++;
+  user2.gameScore.push(gameResults.scores[1]);
+  user2.gameHistory.push(tempReverse(user2.history).join(""));
+  user2.gameNumbers.push(totalGames);
+
+  // log 출력
+  document.write("user1: " + user1.scores + " " + tempReverse(user1.history) + "<br />");
+  document.write("user2: " + user2.scores + " " + tempReverse(user2.history) + "<br />");
+  console.log(gameResults);
 }
 
 function tempReverse(array) {
