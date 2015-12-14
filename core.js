@@ -1,4 +1,5 @@
 var totalGames = 0;
+var gameResults = [];
 function Player(studentId, name, maxMemory, memories) {
   this.name = name;
   this.studentId = studentId;
@@ -12,7 +13,6 @@ function Player(studentId, name, maxMemory, memories) {
   this.gameHistory = [];
   this.games = 0;
 }
-
 Player.prototype = {
   constructor: Player,
   // history와 비교하여 전략을 짬
@@ -32,7 +32,7 @@ Player.prototype = {
         strategy = arguments.callee(num - 1, memories, history).strategy;
       }
     } else {
-      console.log("error: round value");
+      console.warn("error: round value");
     }
     // console.log(num, recentHistory, strategy);
     return {recentHistory: recentHistory, strategy: strategy};
@@ -57,7 +57,7 @@ Player.prototype = {
           char = 'd';
           break;
         default:
-          console.log("error: strategy character");
+          console.warn("error: strategy character");
       }
     }
     return char;
@@ -132,7 +132,7 @@ function calScore(result) {
     case "hh":
       return [0, 0];
     default:
-      console.log("error: invalid result");
+      console.warn("error: invalid result");
   }
 }
 
@@ -155,7 +155,9 @@ function playGame(user1, user2) {
     duel(user1, user2, i);
   }
 
-  var gameResults = {
+  totalGames ++;
+
+  var gameResult = {
     gameNumber: totalGames,
     players: [user1.studentId, user2.studentId],
     gameHistory: user1.history,
@@ -169,23 +171,51 @@ function playGame(user1, user2) {
     })()
   };
 
-  totalGames ++;
+  gameResults.push(gameResult);
+
   // 게임 결과를 각 user에 저장
   user1.games ++;
-  user1.gameScore.push(gameResults.scores[0]);
-  user1.gameHistory.push(tempReverse(user1.history).join(""));
+  user1.gameScore.push(gameResult.scores[0]);
+  user1.gameHistory.push(tempReverse(user1.history).join(" "));
   user1.gameNumbers.push(totalGames);
   user2.games ++;
-  user2.gameScore.push(gameResults.scores[1]);
-  user2.gameHistory.push(tempReverse(user2.history).join(""));
+  user2.gameScore.push(gameResult.scores[1]);
+  user2.gameHistory.push((function () {
+    tempArray = [];
+    for (var i = 9; i >= 0; i--) {
+      tempArray.push(user2.history[i][1] + user2.history[i][0]);
+    }
+    return tempArray.join(" ");
+  })());
   user2.gameNumbers.push(totalGames);
 
   // log 출력
   document.write("user1: " + user1.scores + " " + tempReverse(user1.history) + "<br />");
   document.write("user2: " + user2.scores + " " + tempReverse(user2.history) + "<br />");
-  console.log(gameResults);
+  console.log("Game result", gameResult);
 }
 
 function tempReverse(array) {
   return array.reverse();
 }
+
+// Ajax
+var xhr = new XMLHttpRequest();
+xhr.open('POST', './data.php');
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.send();
+
+var player1, player2;
+xhr.onload = function () {
+  // document.write(xhr.responseText);
+  var data = JSON.parse(xhr.responseText);
+
+  user1 = new Player(data[0].studentId, data[0].name, data[0].maxMemory, data[0].memories);
+  user2 = new Player(data[1].studentId, data[1].name, data[1].maxMemory, data[1].memories);
+  player1 = user1;
+  player2 = user2;
+
+  playGame(player1, player2);
+  console.log("Players", player1, player2);
+  console.log("gameResults", gameResults);
+};
